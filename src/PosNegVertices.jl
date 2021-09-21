@@ -10,7 +10,7 @@ using Nemo
 using Polymake
 Base.@kwdef mutable struct PolyPolyt{T}
     p::MPolyElem{T}
-    pointconfiguration::Union{Polymake.BigObjectAllocated, Nothing} = nothing
+    pointconfiguration::Union{Polymake.BigObjectAllocated,Nothing} = nothing
 end
 
 set_pointconfiguration!(pp) = pp.pointconfiguration = pointconfiguration(pp.p)
@@ -30,16 +30,16 @@ end
 
 exponents_matrix(p) = reduce(hcat, exponent_vectors(p))
 
-polymake_homog(M::AbstractMatrix{T}) where {T} = hcat(ones(T, size(M,2)), transpose(M))
-polymake_dehomog(M) = transpose(M[:,(begin+1):end])
+polymake_homog(M::AbstractMatrix{T}) where {T} = hcat(ones(T, size(M, 2)), LA.transpose(M))
+polymake_dehomog(M) = LA.transpose(M[:,(begin + 1):end])
 
 pointconfiguration(p) =
     Polymake.polytope.PointConfiguration(POINTS=polymake_homog(exponents_matrix(p)))
 
-negvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) < base_ring(pp.p)(0)]
+negvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) < zero(base_ring(pp.p))]
 negvertices(p) = negvertices(PolyPolyt(;p=p))
 
-posvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) > base_ring(pp.p)(0)]
+posvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) > zero(base_ring(pp.p))]
 posvertices(p) = posvertices(PolyPolyt(;p=p))
 
 # hasindependentterm(p) = coeff(p, zeros(Int, nvars(parent(p)))) != base_ring(p)(0)

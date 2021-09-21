@@ -19,10 +19,22 @@ normalize(p) = divexact(p, content(p))
 
 lead(i::Number) = i
 
+## From Polymake matrices to Juila arrays
+function convert_to_matrix(M::Polymake.Matrix, ::Type{T}=Int) where {T}
+    mat = Polymake.@convert_to Matrix{T} M
+    return T.(transpose(Array(mat)))
+end
+
+## From Nemo matrices to Juila arrays
+function convert_to_matrix(M::S, ::Type{T}=Int) where {S <: MatElem,T}
+    return T.(Array(M))
+end
+
+
 function Nemo.nullspace_right_rational(N::AbstractArray{T}) where {T <: Integer}
     Nnemo = Nemo.matrix(Nemo.FlintZZ, N)
     r, U = Nemo.nullspace_right_rational(Nnemo)
-    return convert_to_array(U[:,1:r], T)
+    return convert_to_matrix(U[:,1:r], T)
 end
 
 """

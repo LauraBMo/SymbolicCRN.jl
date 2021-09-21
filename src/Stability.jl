@@ -9,7 +9,7 @@ function evenodd_coeffs(p)
         odd  = [0]
     else
         even = get_coeffs(p, 0:2:l)
-        odd  = get_coeff(p, 1:2:l)
+        odd  = get_coeffs(p, 1:2:l)
         # even = reverse([coeff(p, i) for i in 0:2:l])
         # odd  = reverse([coeff(p, i) for i in 1:2:l])
     end
@@ -73,10 +73,10 @@ Hurwitz_odd_indices(p) = (degree(p) - 1):-2:2
 Hurwitz_odd_determinants(p) = reverse(Hurwitzdeterminants(p).(Hurwitz_odd_indices(p)))
 
 Hurwitz_subresultants(p) = Hurwitz_subresultants_signs(p) .* subresultants_ducos(evenodd_polys(p)...)
-Hurwitzdeterminants_subresultant(p) = lead.(Hurwitz_subresultants(p))
+Hurwitzdeterminants_subresultant(p) = AA.lead.(Hurwitz_subresultants(p))
 
 function Hurwitz_subresultants_signs(p)
-    n = length(det_oddHurwitz_indices(p))
+    n = length(Hurwitz_odd_indices(p))
     out = ones(Int, n)
     goes_neg = iseven(degree(p)) ? [1,2] : [2,3]
     for i in 1:n
@@ -115,36 +115,47 @@ function signs_stabilitymatrices(io,
     P, x = PolynomialRing(base_ring(J), "x")
     p = divexact(charpoly(P, J), x^mindeg)
     L = []
+    # println(p)
     range = Hurwitz_odd_indices(p)
+    # println(collect(range))
     write(io, "==============================================\n")
     write(io, "==============================================\n")
-    write(io, "$(length(iter)) expressions will be studied\n")
-    for i in range
+    write(io, "$(length(range)) expressions will be studied\n")
+    for i in reverse(range)
         # This poly belongs to base_ring(J), which is defined in the scope calling this function
-        H = Hurwitzdeterminants(i)
+        H = Hurwitzdeterminants(p)(i)
         write(io, "\n-- $i th determinant --\n")
-        signs = unique_signs(D)
+        signs = unique_signs(H)
         write(io, "$(signs)\n")
         if -1 in signs
             push!(L, H)
         end
     end
-    print("==============================================\n")
-    print("==============================================\n")
+    write(io, "==============================================\n")
+    write(io, "==============================================\n")
     return L
 end
 
 function signs_stabilitymatrices(J;
                                  mindeg::Integer=size(J, 1) - rank(J),
                                  unique_signs::Function=x -> unique(sign.(coeffs(x))))
-    StabilityMatrix(IOBuffer(), J, mindeg=mindeg, unique_signs=unique_signs)
+    signs_stabilitymatrices(IOBuffer(), J, mindeg=mindeg, unique_signs=unique_signs)
 end
 
 function signs_stabilitymatrices(file::String,
                                  J;
+                                 netname=nothing,
+                                 mode="a", # append
                                  mindeg::Integer=size(J, 1) - rank(J),
                                  unique_signs::Function=x -> unique(sign.(coeffs(x))))
-    open(file, 'r') do io
-        StabilityMatrix(io, J, mindeg=mindeg, unique_signs=unique_signs)
+    open(file, mode) do io
+        if !(netname === nothing)
+            write(io, "==============================================\n")
+            write(io, "==============================================\n")
+            write(io, "$netname\n")
+            write(io, "==============================================\n")
+            write(io, "==============================================\n")
+        end
+        signs_stabilitymatrices(io, J, mindeg=mindeg, unique_signs=unique_signs)
     end
 end

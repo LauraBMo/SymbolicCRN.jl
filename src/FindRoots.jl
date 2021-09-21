@@ -11,6 +11,14 @@ function tcoeffs(coeffs, texps)
     return polyn
 end
 
+"""
+
+Structure of a tpolynomial T. Vector p of coefficients of T, with v[1] != 0 (nonzero independent term) and integer mindeg idicating the smallest degree of T.
+mindeg can be negative, we have, with n = length(v)-1,
+
+     T = x^mindeg * sum( v .* [1, x,..., x^n])
+
+"""
 struct tpoly{T}
     p::Vector{T}
     mindeg::Int
@@ -18,13 +26,13 @@ end
 
 function tpoly(exps, coeffs, tdir)
     ## Compute exponent of t (to know the minimum in case it is negative).
-    texps = [dot(exp, tdir) for exp in exps]
+    texps = [LA.dot(exp, tdir) for exp in exps]
     poly = tcoeffs(coeffs, texps)
     return tpoly{eltype(poly)}(poly, minimum(texps))
 end
 tpoly(p::MPolyElem, tdir) = tpoly(exponent_vectors(p), coeffs(p), tdir)
 
-Base.evalpoly(z::Number, p::tpoly) = z^(p.mindeg)*Base.evalpoly(z,p.p)
+Base.evalpoly(z::Number, p::tpoly) = z^(p.mindeg) * Base.evalpoly(z, p.p)
 Base.evalpoly(p::tpoly) = z -> Base.evalpoly(z, p)
 Base.evalpoly(A::AbstractArray, p::tpoly) = Base.evalpoly(p).(A)
 
@@ -43,6 +51,9 @@ function collect_realpositiveroots(p, tdir; rtol::Real=1e-7)
     # return tpointof(texp).(troots)
     return troots, poly
 end
+
+pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50) =
+ pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
 
 ## Find roots of p for which q is possitive
 function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt; rtol=1e-7, nattemps::Int=10, bound::Int=50)
