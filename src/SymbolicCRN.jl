@@ -23,5 +23,14 @@ include("Cones.jl")
 export negvertices, posvertices
 include("PosNegVertices.jl")
 
+export evenodd_coeffs, evenodd_polys, mix_evenodd, principaldeterminantsof,
+    normalize_Hurwitz, Hurwitzmatrix, Hurwitzmatrix_sylvester, Hurwitzdeterminants,
+    Hurwitz_odd_determinants, Hurwitz_subresultants, Hurwitzdeterminants_subresultant,
+    signs_stabilitymatrices
+include("Stability.jl")
+
+
+# using Catalyst
+# include("Catalyst.jl")
 
 end
