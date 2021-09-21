@@ -19,4 +19,9 @@ findnegativepoint, rays_outernormalcone, outernormalcone
 ## Polymake: polytope:cone,intersection
 include("Cones.jl")
 
+
+export negvertices, posvertices
+include("PosNegVertices.jl")
+
+
 end
