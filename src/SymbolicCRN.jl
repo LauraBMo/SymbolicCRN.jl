@@ -34,6 +34,10 @@ export evenodd_coeffs, evenodd_polys, mix_evenodd, principaldeterminantsof,
     signs_stabilitymatrices
 include("Stability.jl")
 
+
+export CharpolyCoeff, JacobianConvexparameters, JacobianDeterminantConvexparameters
+incudel("ConvexParameters.jl")
+
 # using Catalyst
 # include("Catalyst.jl")
 
