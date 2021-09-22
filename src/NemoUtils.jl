@@ -69,25 +69,6 @@ partialdervativeof(i::Integer) = p -> Nemo.derivative(p, i)
     Jacobian(R, M, vars=1:length(gens(R)))
 
 Returns the Jacobian matrix of a one-column matrix of polynomials `M` with respect to the generators of `R` indexed by `vars`. When `vars` is omitted all the generators of `R` are used.
-
-# Examples
-```jldoctest; setup = :(using SymbolicCRN, Nemo)
-julia> using Nemo
-
-julia> R, vars = PolynomialRing(ZZ, vcat(["k\$i" for i in 1:5], ["x\$i" for i in 1:4]));
-
-julia> M = [vars[1]*vars[2]*vars[6]-vars[8]; vars[3]*vars[9]+2*vars[7]]
-[k1*k2*x1-x3]
-[ k3*x4+2*x2]
-
-julia> Jacobian(R, M, 6:9)
-[k1*k2  0  -1   0]
-[    0  2   0  k3]
-
-julia> Jacobian(R,M)
-[k2*x1  k1*x1   0  0  0  k1*k2  0  -1   0]
-[    0      0  x4  0  0      0  2   0  k3]
-```
 """
 function Jacobian(R::MPolyRing, M::AbstractVector, vars=1:length(gens(R)))
     rows = size(M, 1)
@@ -98,3 +79,22 @@ function Jacobian(R::MPolyRing, M::AbstractVector, vars=1:length(gens(R)))
     end
     return J
 end
+
+# # Examples
+# ```jldoctest; setup = :(using SymbolicCRN, Nemo)
+# julia> using Nemo
+
+# julia> R, vars = PolynomialRing(ZZ, vcat(["k\$i" for i in 1:5], ["x\$i" for i in 1:4]));
+
+# julia> M = [vars[1]*vars[2]*vars[6]-vars[8]; vars[3]*vars[9]+2*vars[7]]
+# [k1*k2*x1-x3]
+# [ k3*x4+2*x2]
+
+# julia> Jacobian(R, M, 6:9)
+# [k1*k2  0  -1   0]
+# [    0  2   0  k3]
+
+# julia> Jacobian(R,M)
+# [k2*x1  k1*x1   0  0  0  k1*k2  0  -1   0]
+# [    0      0  x4  0  0      0  2   0  k3]
+# ```
