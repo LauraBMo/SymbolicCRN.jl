@@ -71,7 +71,7 @@ partialdervativeof(i::Integer) = p -> Nemo.derivative(p, i)
 Returns the Jacobian matrix of a one-column matrix of polynomials `M` with respect to the generators of `R` indexed by `vars`. When `vars` is omitted all the generators of `R` are used.
 
 # Examples
-```jldoctest; setup = :(using CRNT, Nemo)
+```jldoctest; setup = :(using SymbolicCRN, Nemo)
 julia> using Nemo
 
 julia> R, vars = PolynomialRing(ZZ, vcat(["k\$i" for i in 1:5], ["x\$i" for i in 1:4]));
