@@ -1,4 +1,17 @@
 
+
+exponents_matrix(p) = reduce(hcat, exponent_vectors(p))
+
+polymake_homog(M::AbstractMatrix{T}) where {T} = hcat(ones(T, size(M, 2)), LA.transpose(M))
+polymake_dehomog(M) = LA.transpose(M[:,(begin + 1):end])
+
+hasproperty(p::Polymake.BigObject, property::String) = occursin(property, String(Polymake.properties(p)))
+
+
+pointconfiguration(p) =
+    Polymake.polytope.PointConfiguration(POINTS=polymake_homog(exponents_matrix(p)))
+
+
 """
 
     cone_positiveorthant(n)

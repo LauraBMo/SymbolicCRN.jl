@@ -52,15 +52,23 @@ function collect_realpositiveroots(p, tdir; rtol::Real=1e-7)
     return troots, poly
 end
 
-pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50) =
- pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
+function pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50, vertices_p=nothing)
+    pp = vertices_p === nothing ? PolyPolyt(;p=p) : set_vertex_poss!(PolyPolyt(;p=p), vertices_p)
+    return pRoots_qPossitive(pp, PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
+end
 
 ## Find roots of p for which q is possitive
-function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt; rtol=1e-7, nattemps::Int=10, bound::Int=50)
+function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
+                           rtol=1e-7, nattemps::Int=10, bound::Int=50)
     for i in posvertices(pq)
+        print("Computing Outer i=$i ... ")
         icone = outernormalcone(pq, i)
-        for (j, k) in enumerate(negvertices(pp))
+        print("Computed\n")
+        for j in negvertices(pp)
+            print("Computing Outer j=$j ... ")
             jcone = outernormalcone(pp, j)
+            print("Computed\n")
+            print("Computing rays j=$j ... ")
             rays = raysof(Polymake.polytope.intersection(icone, jcone))
             if !(isempty(rays))
                 print("Cones i: $i and j: $j with nontrivial intersection\n")

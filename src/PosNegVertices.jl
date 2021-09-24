@@ -6,8 +6,7 @@
 ## Here, Polymake computes/gives the correspondence between vertices and exponent_vectors
 ## see NegativeVertex2.jl for an alternative approach, where is C++ libflint who computes/gives
 ## such a correspondence.
-using Nemo
-using Polymake
+
 Base.@kwdef mutable struct PolyPolyt{T}
     p::MPolyElem{T}
     pointconfiguration::Union{Polymake.BigObjectAllocated,Nothing} = nothing
@@ -15,29 +14,33 @@ end
 
 set_pointconfiguration!(pp) = pp.pointconfiguration = pointconfiguration(pp.p)
 
+# function set_pointconfiguration!(pp)
+#     pp.pointconfiguration = pointconfiguration(pp.p)
+#     return pp
+# end
+
 function Newtonpolytope(pp::PolyPolyt)
     pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
     return pp.pointconfiguration.CONVEX_HULL
 end
 
-hasproperty(p, property) = occursin(property, String(Polymake.properties(p)))
-
-function vertex_poss(pp)
-    polytope = Newtonpolytope(pp)
-    hasproperty(polytope, "VERTICES") || print("\n -- Computing vertices of Newton polytope -- \n\n")
-    return Array(polytope.VERTEX_POINT_MAP) .+ 1
+function vertex_poss(pp::PolyPolyt)
+    # polytope = Newtonpolytope(pp)
+    pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
+    hasproperty(pp.pointconfiguration, "VERTEX_POINT_MAP") || print("\n -- Computing vertices of Newton polytope -- \n\n")
+    return Array(pp.pointconfiguration.VERTEX_POINT_MAP) .+ 1
 end
 
-exponents_matrix(p) = reduce(hcat, exponent_vectors(p))
-
-polymake_homog(M::AbstractMatrix{T}) where {T} = hcat(ones(T, size(M, 2)), LA.transpose(M))
-polymake_dehomog(M) = LA.transpose(M[:,(begin + 1):end])
-
-pointconfiguration(p) =
-    Polymake.polytope.PointConfiguration(POINTS=polymake_homog(exponents_matrix(p)))
+function set_vertex_poss!(pp::PolyPolyt, vertices)
+    pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
+    vertex_poss = findall(in(eachrow(vertices)), collect(exponent_vectors(pp.p)))
+    pp.pointconfiguration.VERTEX_POINT_MAP = vertex_poss .- 1
+    return pp
+end
 
 negvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) < zero(base_ring(pp.p))]
 negvertices(p) = negvertices(PolyPolyt(;p=p))
+negvertices(p, vertices) = negvertices(set_vertex_poss!(PolyPolyt(;p=p), vertices))
 
 posvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) > zero(base_ring(pp.p))]
 posvertices(p) = posvertices(PolyPolyt(;p=p))
