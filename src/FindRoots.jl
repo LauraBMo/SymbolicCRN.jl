@@ -55,31 +55,33 @@ end
 function pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50, p_vertex_point_map=nothing)
     if p_vertex_point_map === nothing
         return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
-    else
-        if isfile(p_vertex_point_map)
-            return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
-                                     rtol=rtol, nattemps=nattemps, bound=bound,
-                                     pp_vertex_point_map=DF.readdlm(p_vertex_point_map, Int))
-        else
-            return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
-                                     rtol=rtol, nattemps=nattemps, bound=bound,
-                                     pp_vertex_point_map=p_vertex_point_map)
-        end
     end
+    if isa(p_vertex_point_map, AbstractString) && isfile(p_vertex_point_map)
+        return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
+                                 rtol=rtol, nattemps=nattemps, bound=bound,
+                                 pp_vertex_point_map=DF.readdlm(p_vertex_point_map, Int))
+    end
+    return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
+                             rtol=rtol, nattemps=nattemps, bound=bound,
+                             pp_vertex_point_map=p_vertex_point_map)
 end
 
 ## Find roots of p for which q is possitive
 function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
                            rtol=1e-7, nattemps::Int=10, bound::Int=50,
                            pp_vertex_point_map=vertex_point_map(pp))
+    pp_outercones_negvertices = []
+    for j in negvertices(pp, pp_vertex_point_map)
+        print("Computing Outer j=$j ... ")
+        push!(pp_outercones_negvertices, outernormalcone(pp, j))
+        print("Computed\n")
+        print("Computing rays j=$j ... ")
+    end
     for i in posvertices(pq)
         print("Computing Outer i=$i ... ")
         icone = outernormalcone(pq, i)
         print("Computed\n")
-        for j in negvertices(pp, pp_vertex_point_map)
-            print("Computing Outer j=$j ... ")
-            jcone = outernormalcone(pp, j)
-            print("Computed\n")
+        for (j, jcone) in enumerate(pp_outercones_negvertices)
             print("Computing rays j=$j ... ")
             rays = raysof(Polymake.polytope.intersection(icone, jcone))
             if !(isempty(rays))
