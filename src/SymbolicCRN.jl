@@ -6,6 +6,8 @@ const AA = AbstractAlgebra
 import LinearAlgebra # dot, transpose
 const LA = LinearAlgebra
 
+import DelimitedFiles
+const DF = DelimitedFiles
 import Polymake # polytope.cone,intersection
 import PolynomialRoots
 
@@ -14,11 +16,13 @@ export dissect, Diagonal, partialdervativeof, Jacobian
 include("NemoUtils.jl")
 
 
-export negvertices, posvertices
+
+export Newtonpolytope, save_vertex_point_map, negvertices, posvertices
 include("PosNegVertices.jl")
 
 
-export filter_isreal, realpositiveroots, collect_realpositiveroots, pRoots_qPossitive
+
+export tcoeffs, tpoly, filter_isreal, realpositiveroots, collect_realpositiveroots, pRoots_qPossitive
 # using LinearAlgebra: dot
 # using PolynomialRoots: roots
 include("FindRoots.jl")

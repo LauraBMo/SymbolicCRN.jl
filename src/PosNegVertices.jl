@@ -24,26 +24,39 @@ function Newtonpolytope(pp::PolyPolyt)
     return pp.pointconfiguration.CONVEX_HULL
 end
 
-function vertex_poss(pp::PolyPolyt)
+function vertex_point_map(pp::PolyPolyt)
     # polytope = Newtonpolytope(pp)
     pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
     hasproperty(pp.pointconfiguration, "VERTEX_POINT_MAP") || print("\n -- Computing vertices of Newton polytope -- \n\n")
-    return Array(pp.pointconfiguration.VERTEX_POINT_MAP) .+ 1
+    return Array(pp.pointconfiguration.VERTEX_POINT_MAP)
 end
 
-function set_vertex_poss!(pp::PolyPolyt, vertices)
-    pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
-    vertex_poss = findall(in(eachrow(vertices)), collect(exponent_vectors(pp.p)))
-    pp.pointconfiguration.VERTEX_POINT_MAP = vertex_poss .- 1
-    return pp
+## It may be useful to "hard-push" this property to a Polymake.BigObject
+## But it feels too hackie, let's try working without it:
+## The functions who need VERTEX_POINT_MAP accept it as a parameter,
+## so I can use the one saved from older sessions.
+## See negvertices, posvertices, pRoot_qPositive,...
+# function set_vertex_poss!(pp::PolyPolyt, vertex_point_map)
+#     pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
+#     pp.pointconfiguration.VERTEX_POINT_MAP = vertex_point_map
+#     return pp
+# end
+
+function save_vertex_point_map(file::String, pp::PolyPolyt)
+    open(file, "w") do io
+        DF.writedlm(io, vertex_point_map(pp))
+    end
 end
 
-negvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) < zero(base_ring(pp.p))]
+negvertices(pp::PolyPolyt, vp_map=vertex_point_map(pp)) = [i for i in (vp_map .+ 1) if coeff(pp.p, i) < zero(base_ring(pp.p))]
 negvertices(p) = negvertices(PolyPolyt(;p=p))
-negvertices(p, vertices) = negvertices(set_vertex_poss!(PolyPolyt(;p=p), vertices))
+negvertices(p, vp_map) = negvertices(PolyPolyt(;p=p), vp_map)
+negvertices(p, file::String) = negvertices(p, DF.readdlm(file, Int))
 
-posvertices(pp::PolyPolyt) = [i for i in vertex_poss(pp) if coeff(pp.p, i) > zero(base_ring(pp.p))]
-posvertices(p) = posvertices(PolyPolyt(;p=p))
+posvertices(pp::PolyPolyt, vp_map=vertex_point_map(pp)) = [i for i in (vp_map .+ 1) if coeff(pp.p, i) > zero(base_ring(pp.p))]
+posvertices(p) = negvertices(PolyPolyt(;p=p))
+posvertices(p, vp_map) = negvertices(PolyPolyt(;p=p), vp_map)
+posvertices(p, file::String) = negvertices(p, DF.readdlm(file, Int))
 
 # hasindependentterm(p) = coeff(p, zeros(Int, nvars(parent(p)))) != base_ring(p)(0)
 

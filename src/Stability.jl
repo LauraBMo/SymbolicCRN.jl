@@ -63,6 +63,19 @@ function normalize_Hurwitz(p)
     return parent(p)(mix_evenodd(even, odd))
 end
 
+function Hurwitz_genericmatrix(p)
+    n = degree(p)
+    R, vars = PolynomialRing(base_ring(p), ["a$i" for i in 0:(n-1)])
+    S, t = PolynomialRing(R, "t")
+    Q = S([vars; one(R)])
+    H = []
+    for i in Hurewitz_odd_indices(p)
+        D = Hurwitzdeterminants(Q)
+        subs(D, vars .=> coeffs(p))
+    end
+end
+
+
 Hurwitzmatrix(p) = HurwitzMatrix(p)[1:degree(p), 1:degree(p)]
 Hurwitzmatrix_sylvester(p) = sylvester_matrix(evenodd_polys(p)...)
 

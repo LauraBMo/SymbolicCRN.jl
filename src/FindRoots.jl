@@ -52,19 +52,31 @@ function collect_realpositiveroots(p, tdir; rtol::Real=1e-7)
     return troots, poly
 end
 
-function pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50, vertices_p=nothing)
-    pp = vertices_p === nothing ? PolyPolyt(;p=p) : set_vertex_poss!(PolyPolyt(;p=p), vertices_p)
-    return pRoots_qPossitive(pp, PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
+function pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50, p_vertex_point_map=nothing)
+    if p_vertex_point_map === nothing
+        return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
+    else
+        if isfile(p_vertex_point_map)
+            return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
+                                     rtol=rtol, nattemps=nattemps, bound=bound,
+                                     pp_vertex_point_map=DF.readdlm(p_vertex_point_map, Int))
+        else
+            return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
+                                     rtol=rtol, nattemps=nattemps, bound=bound,
+                                     pp_vertex_point_map=p_vertex_point_map)
+        end
+    end
 end
 
 ## Find roots of p for which q is possitive
 function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
-                           rtol=1e-7, nattemps::Int=10, bound::Int=50)
+                           rtol=1e-7, nattemps::Int=10, bound::Int=50,
+                           pp_vertex_point_map=vertex_point_map(pp))
     for i in posvertices(pq)
         print("Computing Outer i=$i ... ")
         icone = outernormalcone(pq, i)
         print("Computed\n")
-        for j in negvertices(pp)
+        for j in negvertices(pp, pp_vertex_point_map)
             print("Computing Outer j=$j ... ")
             jcone = outernormalcone(pp, j)
             print("Computed\n")
