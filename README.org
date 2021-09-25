@@ -1,0 +1,9 @@
+#+TITLE: SymbolicCRN.jl [[https://codecov.io/gh/LauraBMo/SymbolicCRN.jl][https://codecov.io/gh/LauraBMo/SymbolicCRN.jl/branch/master/graph/badge.svg]] [[https://github.com/LauraBMo/SymbolicCRN.jl/actions][https://github.com/LauraBMo/SymbolicCRN.jl/workflows/CI/badge.svg]] [[https://LauraBMo.github.io/SymbolicCRN.jl/dev][https://img.shields.io/badge/docs-dev-blue.svg]] [[https://LauraBMo.github.io/SymbolicCRN.jl/stable][https://img.shields.io/badge/docs-stable-blue.svg]]
+#+DATE: 25 Sep 2021
+#+LANGUAGE: en
+#+OPTIONS: toc:nil
+
+Package build on top of [[https://github.com/SciML/Catalyst.jl][Catalyst.jl]] and [[https://oscar.computeralgebra.de/documentation/][OSCAR]]. Symbolic manipulating reaction networks.
+Parametrise steady states by convex parameters.
+
+* Table of contents :TOC:
