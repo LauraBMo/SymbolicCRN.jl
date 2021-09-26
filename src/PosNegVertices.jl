@@ -8,7 +8,7 @@
 ## such a correspondence.
 
 const ver_sufix = "_vertices.txt"
-const map_sufx = "_ver_to_map.txt"
+const map_sufx = "_ver_pt_map.txt"
 
 struct PolyPolyt{T}
     p::MPolyElem{T}
