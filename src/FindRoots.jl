@@ -60,11 +60,13 @@ function pRoots_qPossitive(p, q;
                              rtol=rtol, nattemps=nattemps, bound=bound)
 end
 
+vertex_index(pp::PolyPolyt, i::Int) = searchsortedfirst(vertex_point_map(pp), i - 1)
+
 function outercones_negvertices(pp::PolyPolyt)
     cones = []
     for j in negvertices(pp)
         print("Computing Outer j=$j ... ")
-        push!(cones, outernormalcone(pp, j))
+        push!(cones, outernormalcone(pp, vertex_index(pp, j)))
         print("Computed\n")
     end
     return cones
@@ -80,10 +82,10 @@ function pRoots_qPossitive(pp_outercones, pq::PolyPolyt;
                            rtol=1e-7, nattemps::Int=10, bound::Int=50)
     for i in posvertices(pq)
         print("Computing Outer i=$i ...   ")
-        icone = outernormalcone(pq, i)
+        icone = outernormalcone(pq, vertex_index(pq, i))
         print("Computed\n")
         for (j, jcone) in enumerate(pp_outercones)
-            print("Computing rays j=$j ...   ")
+            print("Computing rays of intersection j=$j ...   ")
             rays = raysof(Polymake.polytope.intersection(icone, jcone))
             print("Computed\n")
             if !(isempty(rays))
@@ -93,11 +95,11 @@ function pRoots_qPossitive(pp_outercones, pq::PolyPolyt;
                 proots, tpolyp = collect_realpositiveroots(pp.p, tdir; rtol=rtol)
                 qvals = evalpoly(proots, tpoly(pq.p, tdir))
                 r = findfirst(ispositive, qvals)
-                if r === nothing
+                if isnothing(r)
                     j = 1;
-                    while r === nothing && j < nattemps
+                    while isnothing(r) && j < nattemps
                         j += 1
-                        tdir = integermultiple(linearcombination(rays, bound))
+                        tdir = integermultiple(linearcombination(rays, 1:bound))
                         print("Computing real positive roots $j\n")
                         proots, tpolyp = collect_realpositiveroots(pp.p, tdir; rtol=rtol)
                         qvals = evalpoly(proots, tpoly(pq.p, tdir))
