@@ -52,38 +52,40 @@ function collect_realpositiveroots(p, tdir; rtol::Real=1e-7)
     return troots, poly
 end
 
-function pRoots_qPossitive(p, q; rtol=1e-7, nattemps::Int=10, bound::Int=50, p_vertex_point_map=nothing)
-    if p_vertex_point_map === nothing
-        return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q); rtol=rtol, nattemps=nattemps, bound=bound)
-    end
-    if isa(p_vertex_point_map, AbstractString) && isfile(p_vertex_point_map)
-        return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
-                                 rtol=rtol, nattemps=nattemps, bound=bound,
-                                 pp_vertex_point_map=DF.readdlm(p_vertex_point_map, Int))
-    end
-    return pRoots_qPossitive(PolyPolyt(;p=p), PolyPolyt(;p=q);
-                             rtol=rtol, nattemps=nattemps, bound=bound,
-                             pp_vertex_point_map=p_vertex_point_map)
+function pRoots_qPossitive(p, q;
+                           rtol=1e-7, nattemps::Int=10, bound::Int=50,
+                           p_name::Union{Nothing,AbstractString}=nothing,
+                           q_name::Union{Nothing,AbstractString}=nothing)
+    return pRoots_qPossitive(PolyPolyt(p, p_name), PolyPolyt(q, q_name);
+                             rtol=rtol, nattemps=nattemps, bound=bound)
 end
 
-## Find roots of p for which q is possitive
-function pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
-                           rtol=1e-7, nattemps::Int=10, bound::Int=50,
-                           pp_vertex_point_map=vertex_point_map(pp))
-    pp_outercones_negvertices = []
-    for j in negvertices(pp, pp_vertex_point_map)
+function outercones_negvertices(pp::PolyPolyt)
+    cones = []
+    for j in negvertices(pp)
         print("Computing Outer j=$j ... ")
-        push!(pp_outercones_negvertices, outernormalcone(pp, j))
+        push!(cones, outernormalcone(pp, j))
         print("Computed\n")
-        print("Computing rays j=$j ... ")
     end
+    return cones
+end
+
+pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
+                  rtol=1e-7, nattemps::Int=10, bound::Int=50) =
+                      pRoots_qPossitive(outercones_negvertices(pp), pq;
+                                        rtol=rtol, nattemps=nattemps, bound=bound)
+
+## Find roots of p for which q is possitive
+function pRoots_qPossitive(pp_outercones, pq::PolyPolyt;
+                           rtol=1e-7, nattemps::Int=10, bound::Int=50)
     for i in posvertices(pq)
-        print("Computing Outer i=$i ... ")
+        print("Computing Outer i=$i ...   ")
         icone = outernormalcone(pq, i)
         print("Computed\n")
-        for (j, jcone) in enumerate(pp_outercones_negvertices)
-            print("Computing rays j=$j ... ")
+        for (j, jcone) in enumerate(pp_outercones)
+            print("Computing rays j=$j ...   ")
             rays = raysof(Polymake.polytope.intersection(icone, jcone))
+            print("Computed\n")
             if !(isempty(rays))
                 print("Cones i: $i and j: $j with nontrivial intersection\n")
                 tdir = integermultiple(linearcombination(rays))

@@ -7,29 +7,58 @@
 ## see NegativeVertex2.jl for an alternative approach, where is C++ libflint who computes/gives
 ## such a correspondence.
 
-Base.@kwdef mutable struct PolyPolyt{T}
+const ver_sufix = "_vertices.txt"
+const map_sufx = "_ver_to_map.txt"
+
+struct PolyPolyt{T}
     p::MPolyElem{T}
-    pointconfiguration::Union{Polymake.BigObjectAllocated,Nothing} = nothing
+    Newtonpolyt::Polymake.BigObjectAllocated
+    vertex_point_map::Vector{Int}
 end
 
-set_pointconfiguration!(pp) = pp.pointconfiguration = pointconfiguration(pp.p)
+function Base.convert(::Type{PolyPolyt}, p)
+    pt_config = Polymake.polytope.PointConfiguration(POINTS=polymake_homog(exponents_matrix(p)))
+    print("\n -- Computing vertices of Newton polytope -- \n\n")
+    ver_pt_map = Vector(pt_config.VERTEX_POINT_MAP)
+    return PolyPolyt(p,
+                     Polymake.polytope.Polytope(VERTICES=pt_config.CONVEX_HULL.VERTICES),
+                     ver_pt_map)
+end
 
-# function set_pointconfiguration!(pp)
-#     pp.pointconfiguration = pointconfiguration(pp.p)
-#     return pp
+PolyPolyt(p::MPolyElem, vertices::AbstractString, ver_pt_map::AbstractString) =
+    PolyPolyt(p,
+              Polymake.polytope.Polytope(VERTICES=DF.readdlm(vertices, Int)),
+              vec(DF.readdlm(ver_pt_map, Int)))
+
+PolyPolyt(p::MPolyElem, name::Union{Nothing,AbstractString}=nothing) =
+    isnothing(name) ? convert(PolyPolyt, p) : PolyPolyt(p, name * ver_sufix, name * map_sufx)
+
+# TODO save and load the polynomial as well
+# PolyPolyt(p::AbstractString, vertices::AbstractString, ver_pt_map::AbstractString) where T =
+#     PolyPolyt(...,
+#               Polymake.polytope.Polytope(VERTICES=DF.readdlm(vertices, Int)),
+#               DF.readdlm(ver_pt_map, Int))
+
+Newtonpolytope(pp::PolyPolyt) = pp.Newtonpolyt
+vertex_point_map(pp::PolyPolyt) = pp.vertex_point_map
+
+function save_polypolyt(name::AbstractString, pp)
+    # open(name*"_poly.txt", "w") do io
+    #     DF.writedlm(io, collect(dissect(pp.p)))
+    # end
+    open(name * ver_sufix, "w") do io
+        DF.writedlm(io, Newtonpolytope(pp).VERTICES)
+    end
+    open(name * map_sufx, "w") do io
+        DF.writedlm(io, vertex_point_map(pp))
+    end
+end
+
+# function save_vertex_point_map(file::String, pp::PolyPolyt)
+#     open(file, "w") do io
+#         DF.writedlm(io, vertex_point_map(pp))
+#     end
 # end
-
-function Newtonpolytope(pp::PolyPolyt)
-    pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
-    return pp.pointconfiguration.CONVEX_HULL
-end
-
-function vertex_point_map(pp::PolyPolyt)
-    # polytope = Newtonpolytope(pp)
-    pp.pointconfiguration === nothing && set_pointconfiguration!(pp)
-    hasproperty(pp.pointconfiguration, "VERTEX_POINT_MAP") || print("\n -- Computing vertices of Newton polytope -- \n\n")
-    return Array(pp.pointconfiguration.VERTEX_POINT_MAP)
-end
 
 ## It may be useful to "hard-push" this property to a Polymake.BigObject
 ## But it feels too hackie, let's try working without it:
@@ -42,21 +71,13 @@ end
 #     return pp
 # end
 
-function save_vertex_point_map(file::String, pp::PolyPolyt)
-    open(file, "w") do io
-        DF.writedlm(io, vertex_point_map(pp))
-    end
-end
+isa_vertex(pp::PolyPolyt, F::Function) = [i for i in (vertex_point_map(pp) .+ 1) if F(i)]
 
-negvertices(pp::PolyPolyt, vp_map=vertex_point_map(pp)) = [i for i in (vp_map .+ 1) if coeff(pp.p, i) < zero(base_ring(pp.p))]
-negvertices(p) = negvertices(PolyPolyt(;p=p))
-negvertices(p, vp_map) = negvertices(PolyPolyt(;p=p), vp_map)
-negvertices(p, file::String) = negvertices(p, DF.readdlm(file, Int))
+negvertices(pp::PolyPolyt) = isa_vertex(pp, i -> isless(coeff(pp.p, i), zero(base_ring(pp.p))))
+negvertices(p, name::Union{Nothing,AbstractString}=nothing) = negvertices(PolyPolyt(p, name))
 
-posvertices(pp::PolyPolyt, vp_map=vertex_point_map(pp)) = [i for i in (vp_map .+ 1) if coeff(pp.p, i) > zero(base_ring(pp.p))]
-posvertices(p) = negvertices(PolyPolyt(;p=p))
-posvertices(p, vp_map) = negvertices(PolyPolyt(;p=p), vp_map)
-posvertices(p, file::String) = negvertices(p, DF.readdlm(file, Int))
+posvertices(pp::PolyPolyt) = isa_vertex(pp, i -> isless(zero(base_ring(pp.p)), coeff(pp.p, i)))
+posvertices(p, name::Union{Nothing,AbstractString}=nothing) = posvertices(PolyPolyt(p, name))
 
 # hasindependentterm(p) = coeff(p, zeros(Int, nvars(parent(p)))) != base_ring(p)(0)
 

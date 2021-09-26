@@ -7,10 +7,13 @@ polymake_dehomog(M) = LA.transpose(M[:,(begin + 1):end])
 
 hasproperty(p::Polymake.BigObject, property::String) = occursin(property, String(Polymake.properties(p)))
 
-
-pointconfiguration(p) =
-    Polymake.polytope.PointConfiguration(POINTS=polymake_homog(exponents_matrix(p)))
-
+function save_cones(name, cones)
+    for (i, cone) in enumerate(cones)
+        open(name * "_cone-$i.txt", "w") do io
+            DF.writedlm(io, cone.RAYS)
+        end
+    end
+end
 
 """
 
@@ -54,6 +57,7 @@ end
 #################################
 
 raysof(cone) = Rational.(transpose(Array(cone.RAYS)))
+verticesof(polytope) = Rational.(polymake_dehomog(polytope.VERTICES))
 
 outernormalcone(polytope, vertex) =
     Polymake.polytope.normal_cone(polytope, vertex - 1, outer=1)
