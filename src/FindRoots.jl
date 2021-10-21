@@ -24,6 +24,16 @@ struct tpoly{T}
     mindeg::Int
 end
 
+Base.show(io::IO, tp::tpoly) = begin
+    show(io, tp.p)
+    show(io, "\nMindeg: ")
+    show(io, tp.mindeg)
+end
+
+# Base.show(io::IO, ::MIME"text/plain", p::HurwitzMatrix) =
+#     print(io, "HurwitzMatrix for poly (coeffs $(base_ring(p.p))) :\n", p)
+
+
 function tpoly(exps, coeffs, tdir)
     ## Compute exponent of t (to know the minimum in case it is negative).
     texps = [LA.dot(exp, tdir) for exp in exps]
