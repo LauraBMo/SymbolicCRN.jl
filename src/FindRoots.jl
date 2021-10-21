@@ -13,10 +13,10 @@ end
 
 """
 
-Structure of a tpolynomial T. Vector p of coefficients of T, with v[1] != 0 (nonzero independent term) and integer mindeg idicating the smallest degree of T.
+Structure of a tpolynomial P. Vector p of coefficients of P, with v[1] != 0 (nonzero independent term) and integer mindeg indicating the smallest degree of P.
 mindeg can be negative, we have, with n = length(v)-1,
 
-     T = x^mindeg * sum( v .* [1, x,..., x^n])
+     P = x^mindeg * sum( v .* [1, x,..., x^n])
 
 """
 struct tpoly{T}
