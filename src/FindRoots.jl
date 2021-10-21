@@ -4,7 +4,7 @@ function tcoeffs(coeffs, texps)
     mindeg = minimum(texps)
     ## If mindeg>0 we divide by t^(mindeg), otherwise we multiply by it.
     ## Both correspond to shift by -mindeg!
-    polyn = zeros(Int, maxdeg - mindeg + 1)
+    polyn = zeros(eltype(coeffs), maxdeg - mindeg + 1)
     for (c, i) in zip(coeffs, texps)
         polyn[i - mindeg + 1] += c
     end
@@ -28,7 +28,7 @@ function tpoly(exps, coeffs, tdir)
     ## Compute exponent of t (to know the minimum in case it is negative).
     texps = [LA.dot(exp, tdir) for exp in exps]
     poly = tcoeffs(coeffs, texps)
-    return tpoly{eltype(poly)}(poly, minimum(texps))
+    return tpoly(poly, minimum(texps))
 end
 tpoly(p::MPolyElem, tdir) = tpoly(exponent_vectors(p), coeffs(p), tdir)
 
@@ -60,53 +60,73 @@ function pRoots_qPossitive(p, q;
                              rtol=rtol, nattemps=nattemps, bound=bound)
 end
 
+function pRoots_qPossitive(cones::Vector, q;
+                           rtol=1e-7, nattemps::Int=10, bound::Int=50,
+                           q_name::Union{Nothing,AbstractString}=nothing)
+    return pRoots_qPossitive(cones, PolyPolyt(q, q_name);
+                             rtol=rtol, nattemps=nattemps, bound=bound)
+end
+
 vertex_index(pp::PolyPolyt, i::Int) = searchsortedfirst(vertex_point_map(pp), i - 1)
 
 function outercones_negvertices(pp::PolyPolyt)
     cones = []
     for j in negvertices(pp)
-        print("Computing Outer j=$j ... ")
+        print("Computing outer cone j=$j, vertex=$(vertex_index(pp, j))...")
         push!(cones, outernormalcone(pp, vertex_index(pp, j)))
-        print("Computed\n")
+        print("  Computed\n")
     end
     return cones
 end
 
 pRoots_qPossitive(pp::PolyPolyt, pq::PolyPolyt;
                   rtol=1e-7, nattemps::Int=10, bound::Int=50) =
-                      pRoots_qPossitive(outercones_negvertices(pp), pq;
+                      pRoots_qPossitive(pp, outercones_negvertices(pp), pq;
                                         rtol=rtol, nattemps=nattemps, bound=bound)
 
 ## Find roots of p for which q is possitive
-function pRoots_qPossitive(pp_outercones, pq::PolyPolyt;
+function pRoots_qPossitive(pp::PolyPolyt, pp_outercones::Vector, pq::PolyPolyt;
                            rtol=1e-7, nattemps::Int=10, bound::Int=50)
     for i in posvertices(pq)
-        print("Computing Outer i=$i ...   ")
+        print("Computing cone i=$i...")
         icone = outernormalcone(pq, vertex_index(pq, i))
-        print("Computed\n")
+        print("   Computed\n")
         for (j, jcone) in enumerate(pp_outercones)
-            print("Computing rays of intersection j=$j ...   ")
+            print("Computing rays of intersection...")
             rays = raysof(Polymake.polytope.intersection(icone, jcone))
-            print("Computed\n")
+            print("   Computed\n")
             if !(isempty(rays))
-                print("Cones i: $i and j: $j with nontrivial intersection\n")
+                print("Cones i: $i and j: $j with nontrivial intersection.\n")
                 tdir = integermultiple(linearcombination(rays))
-                print("Computing real positive roots\n")
+                print("Computing real positive roots, 1st tiemj.\n")
+                println(tdir)
                 proots, tpolyp = collect_realpositiveroots(pp.p, tdir; rtol=rtol)
+                print("Proots: ")
+                println(proots)
                 qvals = evalpoly(proots, tpoly(pq.p, tdir))
-                r = findfirst(ispositive, qvals)
+                r = findfirst(>(0), qvals)
+                print("Qvals: ")
+                println(qvals)
+                # println(minimum(qvals), maximum(qvals))
                 if isnothing(r)
                     j = 1;
                     while isnothing(r) && j < nattemps
                         j += 1
                         tdir = integermultiple(linearcombination(rays, 1:bound))
-                        print("Computing real positive roots $j\n")
+                        print("Computing real positive roots, $j-th tiem.\n")
+                        println(tdir)
                         proots, tpolyp = collect_realpositiveroots(pp.p, tdir; rtol=rtol)
+                        print("Proots: ")
+                        println(proots)
                         qvals = evalpoly(proots, tpoly(pq.p, tdir))
-                        r = findfirst(ispositive, qvals)
+                        r = findfirst(>(0), qvals)
+                        print("Qvals: ")
+                        println(qvals)
                     end
                 end
-                if !(r === nothing)
+                if isnothing(r)
+                    print("No positive root found for cones i=$i, j=$j\n\n")
+                else
                     printfound(i, j, tdir, proots, qvals)
                 end
             end

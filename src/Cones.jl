@@ -79,5 +79,5 @@ function integermultiple(A)
     return Int.(abs(lcm(denominator.(A))) .* A)
 end
 
-linearcombination(A) = A * ones(Int, size(A, 2))
-linearcombination(A, range) = A * rand(range, 1, size(A, 2))
+linearcombination(A) = A * ones(eltype(A), size(A, 2))
+linearcombination(A, range) = A * rand(range, size(A, 2), 1)
