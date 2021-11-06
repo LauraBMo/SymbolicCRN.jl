@@ -1,6 +1,21 @@
-using SymbolicCRN
 using Test
+using SafeTestsets, TestSetExtensions
 
-@testset "SymbolicCRN.jl" begin
-    # Write your tests here.
+@testset verbose = true ExtendedTestSet "SymbolicCRN.jl" begin
+    @safetestset "Cones.jl" begin include("Cones.jl") end;
+
+    @safetestset "ConvexParameters.jl" begin end;
+
+    @safetestset "FindRoots.jl" begin end;
+
+    @safetestset "HomotopyContinuation.jl" begin end;
+
+    @safetestset "NemoUtils.jl" begin include("NemoUtils.jl") end;
+
+    @safetestset "PosNegVertices.jl" begin end;
+
+    @safetestset "Stability.jl" begin end;
+
+    @safetestset "Utils.jl" begin end;
+
 end
