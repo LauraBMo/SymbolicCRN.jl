@@ -1,10 +1,12 @@
-using Test
-using SafeTestsets, TestSetExtensions
+push!(LOAD_PATH, "$(homedir())/.julia/dev")
 
-@testset verbose = true ExtendedTestSet "SymbolicCRN.jl" begin
+using Test
+using SafeTestsets# , TestSetExtensions
+
+@testset verbose = true "SymbolicCRN.jl" begin
     @safetestset "Cones.jl" begin include("Cones.jl") end;
 
-    @safetestset "ConvexParameters.jl" begin end;
+    @safetestset "ConvexParameters.jl" begin include("ConvexParameters.jl") end;
 
     @safetestset "FindRoots.jl" begin end;
 

@@ -1,6 +1,15 @@
 
 ## Functions to create some standard cones in Polymake from Julia objects.
 
+## Some utils for polymake objects
+polymake_homog(M) = hcat(ones(eltype(M), size(M, 1)), M)
+polymake_dehomog(M::AbstractMatrix) = M[:,(begin + 1):end]
+
+hasproperty(p::Polymake.BigObject, property::String) = occursin(property, String(Polymake.properties(p)))
+
+raysof(cone) = permutedims(Rational.(Matrix(cone.RAYS)))
+verticesof(polytope) = permutedims(Rational.(polymake_dehomog(polytope.VERTICES)))
+
 function save_cones(name, cones)
     for (i, cone) in enumerate(cones)
         open(name * "_cone-$i.txt", "w") do io
@@ -9,6 +18,7 @@ function save_cones(name, cones)
     end
 end
 
+## The cones
 """
 $(SIGNATURES)
 
@@ -46,11 +56,6 @@ end
 
 #################################
 #################################
-#################################
-#################################
-
-raysof(cone) = permutedims(Rational.(Matrix(cone.RAYS)))
-verticesof(polytope) = permutedims(Rational.(polymake_dehomog(polytope.VERTICES)))
 
 outernormalcone(polytope, vertex) =
     Polymake.polytope.normal_cone(polytope, vertex - 1, outer=1)
@@ -58,3 +63,13 @@ outernormalcone(pp::PolyPolyt, vertex) =
     outernormalcone(Newtonpolytope(pp), vertex)
 outernormalcone(p::MPolyElem, vertex) =
     outernormalcone(PolyPolyt(p), vertex)
+
+function outercones_negvertices(pp::PolyPolyt, neg_vertices=negvertices(pp))
+    cones = []
+    for j in neg_vertices
+        @computing push!(cones, outernormalcone(pp, vertex_index(pp, j))) "outer normal cone"
+    end
+    return cones
+end
+
+outercones_negvertices(pp::MPolyElem) = outercones_negvertices(PolyPolyt(pp))

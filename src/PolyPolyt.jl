@@ -55,24 +55,24 @@ verticesof(Newtonpolytope(pp))[:, vertex_index(pp, i)] == collect(exponent_vecto
 vertex_index(pp::PolyPolyt, i::Int) = searchsortedfirst(vertex_point_map(pp), i - 1)
 
 function Base.convert(::Type{PolyPolyt}, p)
-    pt_config = Polymake.polytope.PointConfiguration(POINTS=polymake_homog(permutedims(exponents_matrix(p))))
+    pt_config = Polymake.polytope.PointConfiguration(POINTS = polymake_homog(permutedims(exponents_matrix(p))))
     @computing ver_pt_map = Vector(pt_config.VERTEX_POINT_MAP) "vertices of Newton polytope"
     return PolyPolyt(p,
-                     Polymake.polytope.Polytope(VERTICES=pt_config.CONVEX_HULL.VERTICES),
-                     ver_pt_map)
+        Polymake.polytope.Polytope(VERTICES = pt_config.CONVEX_HULL.VERTICES),
+        ver_pt_map)
 end
 
 PolyPolyt(p::MPolyElem) = convert(PolyPolyt, p)
 
 PolyPolyt(p::MPolyElem, vertices, ver_pt_map) =
     PolyPolyt(p,
-              Polymake.polytope.Polytope(VERTICES=vertices),
-              vec(ver_pt_map))
+        Polymake.polytope.Polytope(VERTICES = vertices),
+        vec(ver_pt_map))
 
 PolyPolyt(p::MPolyElem, name::AbstractString) =
     PolyPolyt(p,
-              readdlm(name * ver_sufix, Int),
-              readdlm(name * map_sufix, Int))
+        readdlm(name * ver_sufix, Int),
+        readdlm(name * map_sufix, Int))
 
 # TODO save and load the polynomial as well
 # PolyPolyt(p::AbstractString, vertices::AbstractString, ver_pt_map::AbstractString) where T =
@@ -94,10 +94,10 @@ function save_polypolyt(name::AbstractString, pp::PolyPolyt)
     end
 end
 
-negvertices(pp::PolyPolyt, isneg_fun=_isnegative) =
+negvertices(pp::PolyPolyt, isneg_fun = _isnegative) =
     filter(i -> isneg_fun(coeff(pp.p, i)), vertex_point_map(pp) .+ 1)
-negvertices(p, name::AbstractString, isneg_fun=_isnegative) = negvertices(PolyPolyt(p, name), isneg_fun=isneg_fun)
-negvertices(p, isneg_fun=_isnegative) = negvertices(PolyPolyt(p), isneg_fun=isneg_fun)
+negvertices(p, name::AbstractString, isneg_fun = _isnegative) = negvertices(PolyPolyt(p, name), isneg_fun = isneg_fun)
+negvertices(p, isneg_fun = _isnegative) = negvertices(PolyPolyt(p), isneg_fun = isneg_fun)
 
 # posvertices(pp::PolyPolyt, ispos_fun=_ispositive) =
 #     filter(i -> ispos_fun(coeff(pp.p, i)), vertex_point_map(pp) .+ 1)

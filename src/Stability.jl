@@ -41,7 +41,7 @@ AA.nrows(p::HurwitzMatrix) = degree(p.p)
 AA.ncols(p::HurwitzMatrix) = AA.nrows(p)
 AA.length(p::HurwitzMatrix) = AA.nrows(p)^2
 AA.isempty(p::HurwitzMatrix) = false
-AA.base_ring(p::HurwitzMatrix) = base_ring(p.p)
+AA.base_ring(p::HurwitzMatrix) = AA.base_ring(p.p)
 
 Base.show(io::IO, p::HurwitzMatrix) = print(io, p.p)
 Base.show(io::IO, ::MIME"text/plain", p::HurwitzMatrix) =
@@ -65,7 +65,7 @@ end
 
 function Hurwitz_genericmatrix(p)
     n = degree(p)
-    R, vars = PolynomialRing(base_ring(p), ["a$i" for i in 0:(n-1)])
+    R, vars = PolynomialRing(base_ring(p), ["a$i" for i in 0:(n - 1)])
     S, t = PolynomialRing(R, "t")
     Q = S([vars; one(R)])
     H = []
@@ -85,20 +85,24 @@ Hurwitz_odd_indices(p) = (degree(p) - 1):-2:2
 
 Hurwitz_odd_determinants(p) = reverse(Hurwitzdeterminants(p).(Hurwitz_odd_indices(p)))
 
-Hurwitz_subresultants(p) = Hurwitz_subresultants_signs(p) .* subresultants_ducos(evenodd_polys(p)...)
-Hurwitzdeterminants_subresultant(p) = AA.lead.(Hurwitz_subresultants(p))
+Hurwitz_subresultants(p) = Hurwitz_subresultants_signs(p) .* AA.subresultants_ducos(evenodd_polys(p)...)
+Hurwitzdeterminants_subresultant(p) = AA.leading_coefficient.(Hurwitz_subresultants(p))
 
+## The signs of the antidiagonal.
 function Hurwitz_subresultants_signs(p)
     n = length(Hurwitz_odd_indices(p))
     out = ones(Int, n)
     goes_neg = iseven(degree(p)) ? [1,2] : [2,3]
-    for i in 1:n
-        if i % 4 in goes_neg
-            out[i] = -1
-        end
-    end
+    neg_indices = filter(i -> i % 4 in goes_neg, 1:n)
+    out[neg_indices] .= -1
+    # for i in .%(1:n,4)
+    #     if i goes_neg
+    #         out[i] = -1
+    #     end
+    # end
     return out
 end
+
 
 ## Numerical results form test_subresultant_ducos
 ## Deg | length | signs
@@ -136,6 +140,7 @@ function signs_stabilitymatrices(io,
     write(io, "$(length(range)) expressions will be studied\n")
     for i in reverse(range)
         # This poly belongs to base_ring(J), which is defined in the scope calling this function
+        # @computing H = Hurwitzdeterminants(p)(i) "$i-th Hurwitz determinant"
         H = Hurwitzdeterminants(p)(i)
         write(io, "\n-- $i th determinant --\n")
         signs = unique_signs(H)
@@ -162,7 +167,7 @@ function signs_stabilitymatrices(file::String,
                                  mindeg::Integer=size(J, 1) - rank(J),
                                  unique_signs::Function=x -> unique(sign.(coeffs(x))))
     open(file, mode) do io
-        if !(netname === nothing)
+        if !(isnothing(netname))
             write(io, "==============================================\n")
             write(io, "==============================================\n")
             write(io, "$netname\n")
