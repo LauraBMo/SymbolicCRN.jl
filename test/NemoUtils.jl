@@ -1,6 +1,6 @@
 using Nemo, LinearAlgebra, DelimitedFiles
 
-using Revise
+# using Revise
 using SymbolicCRN
 
 M = [63   90   36  -45  -18
